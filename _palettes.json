@@ -1,0 +1,28 @@
+{
+    "nextPaletteID": 1,
+    "palettes": {
+        "custom0": {
+            "id": "custom0",
+            "name": "Star",
+            "colors": [
+                "#000000",
+                "#FFF700",
+                "#FFEA00",
+                "#FFBB00",
+                "#FF8135",
+                "#FF5900",
+                "#6CD350",
+                "#2CAA34",
+                "#4287FF",
+                "#4200BD",
+                "#FFFFFF",
+                "#7C3D13",
+                "#7D7D7D",
+                "#546F9C",
+                "#C22A19",
+                "#000000"
+            ],
+            "custom": true
+        }
+    }
+}
