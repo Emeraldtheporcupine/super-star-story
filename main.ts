@@ -6,42 +6,6 @@ namespace SpriteKind {
     export const CoolThingNotReallyNeeded = SpriteKind.create()
     export const CoolThingNotReallyNeededFront = SpriteKind.create()
 }
-scene.onOverlapTile(SpriteKind.Chaser, assets.tile`myTile8`, function (sprite, location) {
-    if (MarioTouchedFlag == false) {
-        ChaserControl = false
-        MarioTouchedFlag = true
-        tiles.placeOnTile(sprite, location)
-        characterAnimations.clearCharacterState(sprite)
-        animation.stopAnimation(animation.AnimationTypes.All, sprite)
-        animation.runImageAnimation(
-        sprite,
-        assets.animation`Maaaaaaario Slide`,
-        200,
-        true
-        )
-        music.stopAllSounds()
-        music.play(music.createSong(assets.song`Mario Finished`), music.PlaybackMode.InBackground)
-        sprite.x += -11
-        sprite.vx = 0
-        sprite.ay = 0
-        sprite.vy = 40
-        Flag.vy = 40
-        timer.background(function () {
-            pauseUntil(() => sprite.isHittingTile(CollisionDirection.Bottom))
-            Flag.vy = 0
-            sprite.vx = 35
-            sprite.ay = 300
-            characterAnimations.clearCharacterState(sprite)
-            animation.stopAnimation(animation.AnimationTypes.All, sprite)
-            animation.runImageAnimation(
-            sprite,
-            assets.animation`Maaaaaaario walk right`,
-            200,
-            true
-            )
-        })
-    }
-})
 function LevelSetup () {
     scene.centerCameraAt(80, 196)
     music.stopAllSounds()
@@ -183,32 +147,6 @@ function LevelSetup () {
     }
     Screen = "Title"
 }
-sprites.onOverlap(SpriteKind.Chaser, SpriteKind.CoolThingNotReallyNeededFront, function (sprite, otherSprite) {
-    if (Screen == "Play") {
-        Screen = "Results"
-        timer.after(1000, function () {
-            sprites.destroy(sprite)
-            timer.after(1000, function () {
-                ShootFireworks()
-            })
-            timer.after(2000, function () {
-                ShootFireworks()
-            })
-            timer.after(3000, function () {
-                ShootFireworks()
-            })
-            timer.after(4500, function () {
-                Results()
-            })
-        })
-    }
-})
-controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
-    if (Screen == "Title") {
-        Screen = "Play"
-        Play()
-    }
-})
 function animatePlayer (Player: Sprite) {
     if (Player.vx > 5) {
         State = "Walk"
@@ -233,11 +171,9 @@ function animatePlayer (Player: Sprite) {
         PlayerDeath(Player)
     }
 }
-sprites.onOverlap(SpriteKind.Player, SpriteKind.MarioEnemy, function (sprite, otherSprite) {
-    if (sprite.y < otherSprite.y - 5 && (sprite.y < otherSprite.y + 3 && sprite.vy != 0)) {
-        sprites.destroy(otherSprite)
-        sprite.vy = -75
-        music.play(music.createSoundEffect(WaveShape.Noise, 584, 599, 255, 0, 100, SoundExpressionEffect.None, InterpolationCurve.Linear), music.PlaybackMode.UntilDone)
+scene.onHitWall(SpriteKind.Player, function (sprite, location) {
+    if (sprite.isHittingTile(CollisionDirection.Bottom) && sprite.tilemapLocation().row > 14) {
+        PlayerDeath(sprite)
     }
 })
 function WipeOutTheWholeSpecies () {
@@ -250,6 +186,9 @@ function WipeOutTheWholeSpecies () {
     sprites.destroyAllSpritesOfKind(SpriteKind.HUD)
     sprites.destroyAllSpritesOfKind(SpriteKind.Text)
 }
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Chaser, function (sprite, otherSprite) {
+    PlayerDeath(sprite)
+})
 function Play () {
     music.stopAllSounds()
     OGCharacterAmount = sprites.allOfKind(SpriteKind.Player).length
@@ -298,6 +237,12 @@ function Play () {
     music.play(music.createSong(assets.song`Slay0`), music.PlaybackMode.LoopingInBackground)
     ChaserMario.setFlag(SpriteFlag.ShowPhysics, false)
 }
+controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
+    if (Screen == "Title") {
+        Screen = "Play"
+        Play()
+    }
+})
 function setupAnimations () {
     characterAnimations.loopFrames(
     StarPlayer,
@@ -416,9 +361,18 @@ function setupAnimations () {
     characterAnimations.rule(Predicate.MovingRight, Predicate.MovingUp)
     )
 }
-scene.onHitWall(SpriteKind.Player, function (sprite, location) {
-    if (sprite.isHittingTile(CollisionDirection.Bottom) && sprite.tilemapLocation().row > 14) {
-        PlayerDeath(sprite)
+sprites.onOverlap(SpriteKind.Player, SpriteKind.MarioEnemy, function (sprite, otherSprite) {
+    if (sprite.y < otherSprite.y - 5 && (sprite.y < otherSprite.y + 3 && sprite.vy != 0)) {
+        sprites.destroy(otherSprite)
+        sprite.vy = -75
+        music.play(music.createSoundEffect(WaveShape.Noise, 584, 599, 255, 0, 100, SoundExpressionEffect.None, InterpolationCurve.Linear), music.PlaybackMode.UntilDone)
+    }
+})
+controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
+    if (Command == true) {
+        if (StarPlayer.vy == 0) {
+            StarPlayer.vy = -145
+        }
     }
 })
 controller.player2.onButtonEvent(ControllerButton.A, ControllerButtonEvent.Pressed, function () {
@@ -488,40 +442,37 @@ function Results () {
         })
     })
 }
-controller.player3.onButtonEvent(ControllerButton.A, ControllerButtonEvent.Pressed, function () {
-    if (Screen == "Title" && (!(StarPlayer3) || spriteutils.isDestroyed(StarPlayer3))) {
-        StarPlayer3 = sprites.create(assets.image`blank`, SpriteKind.Player)
-        characterAnimations.setCharacterState(StarPlayer3, characterAnimations.rule(Predicate.NotMoving))
-        tiles.placeOnTile(StarPlayer3, tiles.getTileLocation(StarPlayer.tilemapLocation().column + 1, StarPlayer.tilemapLocation().row))
-        StarPlayer3.ay = 300
-        Marker3 = sprites.create(assets.image`P4`, SpriteKind.pointer)
-        Marker3.setFlag(SpriteFlag.Ghost, true)
-        setupAnimations()
+sprites.onOverlap(SpriteKind.Player, SpriteKind.CoolThingNotReallyNeededFront, function (sprite, otherSprite) {
+    if (sprite == StarPlayer) {
+        sprites.destroy(Marker1)
+    } else if (sprite == StarPlayer2) {
+        sprites.destroy(Marker2)
+    } else if (sprite == StarPlayer3) {
+        sprites.destroy(Marker3)
+    } else if (sprite == StarPlayer4) {
+        sprites.destroy(Marker4)
     }
-    if (Command == true && StarPlayer3) {
-        if (Command == true) {
-            if (StarPlayer3.vy == 0) {
-                StarPlayer3.vy = -145
-            }
-        }
-    }
+    sprites.destroy(sprite)
+    PlayersThatFinished += 1
 })
-controller.player4.onButtonEvent(ControllerButton.A, ControllerButtonEvent.Pressed, function () {
-    if (Screen == "Title" && (!(StarPlayer4) || spriteutils.isDestroyed(StarPlayer4))) {
-        StarPlayer4 = sprites.create(assets.image`blank`, SpriteKind.Player)
-        characterAnimations.setCharacterState(StarPlayer4, characterAnimations.rule(Predicate.NotMoving))
-        tiles.placeOnTile(StarPlayer4, tiles.getTileLocation(StarPlayer.tilemapLocation().column + 1, StarPlayer.tilemapLocation().row))
-        StarPlayer4.ay = 300
-        Marker4 = sprites.create(assets.image`P4`, SpriteKind.pointer)
-        Marker4.setFlag(SpriteFlag.Ghost, true)
-        setupAnimations()
-    }
-    if (Command == true && StarPlayer4) {
-        if (Command == true) {
-            if (StarPlayer4.vy == 0) {
-                StarPlayer4.vy = -145
-            }
-        }
+sprites.onOverlap(SpriteKind.Chaser, SpriteKind.CoolThingNotReallyNeededFront, function (sprite, otherSprite) {
+    if (Screen == "Play") {
+        Screen = "Results"
+        timer.after(1000, function () {
+            sprites.destroy(sprite)
+            timer.after(1000, function () {
+                ShootFireworks()
+            })
+            timer.after(2000, function () {
+                ShootFireworks()
+            })
+            timer.after(3000, function () {
+                ShootFireworks()
+            })
+            timer.after(4500, function () {
+                Results()
+            })
+        })
     }
 })
 function PlayerDeath (sprite: Sprite) {
@@ -547,22 +498,6 @@ function PlayerDeath (sprite: Sprite) {
         })
     }
 }
-sprites.onOverlap(SpriteKind.Player, SpriteKind.CoolThingNotReallyNeededFront, function (sprite, otherSprite) {
-    if (sprite == StarPlayer) {
-        sprites.destroy(Marker1)
-    } else if (sprite == StarPlayer2) {
-        sprites.destroy(Marker2)
-    } else if (sprite == StarPlayer3) {
-        sprites.destroy(Marker3)
-    } else if (sprite == StarPlayer4) {
-        sprites.destroy(Marker4)
-    }
-    sprites.destroy(sprite)
-    PlayersThatFinished += 1
-})
-sprites.onOverlap(SpriteKind.Player, SpriteKind.Chaser, function (sprite, otherSprite) {
-    PlayerDeath(sprite)
-})
 function ShootFireworks () {
     frwrkSprite = sprites.create(assets.image`blank`, SpriteKind.CoolThingNotReallyNeeded)
     frwrkSprite.setPosition(scene.cameraProperty(CameraProperty.X) + randint(-70, 70), scene.cameraProperty(CameraProperty.Y) - randint(25, 55))
@@ -577,6 +512,24 @@ function ShootFireworks () {
         sprites.destroy(frwrkSprite)
     })
 }
+controller.player4.onButtonEvent(ControllerButton.A, ControllerButtonEvent.Pressed, function () {
+    if (Screen == "Title" && (!(StarPlayer4) || spriteutils.isDestroyed(StarPlayer4))) {
+        StarPlayer4 = sprites.create(assets.image`blank`, SpriteKind.Player)
+        characterAnimations.setCharacterState(StarPlayer4, characterAnimations.rule(Predicate.NotMoving))
+        tiles.placeOnTile(StarPlayer4, tiles.getTileLocation(StarPlayer.tilemapLocation().column + 1, StarPlayer.tilemapLocation().row))
+        StarPlayer4.ay = 300
+        Marker4 = sprites.create(assets.image`P4`, SpriteKind.pointer)
+        Marker4.setFlag(SpriteFlag.Ghost, true)
+        setupAnimations()
+    }
+    if (Command == true && StarPlayer4) {
+        if (Command == true) {
+            if (StarPlayer4.vy == 0) {
+                StarPlayer4.vy = -145
+            }
+        }
+    }
+})
 function Reset () {
     tempVariable = 0
     ChaserControl = true
@@ -597,32 +550,81 @@ function Reset () {
     Command = true
     LevelSetup()
 }
+controller.player3.onButtonEvent(ControllerButton.A, ControllerButtonEvent.Pressed, function () {
+    if (Screen == "Title" && (!(StarPlayer3) || spriteutils.isDestroyed(StarPlayer3))) {
+        StarPlayer3 = sprites.create(assets.image`blank`, SpriteKind.Player)
+        characterAnimations.setCharacterState(StarPlayer3, characterAnimations.rule(Predicate.NotMoving))
+        tiles.placeOnTile(StarPlayer3, tiles.getTileLocation(StarPlayer.tilemapLocation().column + 1, StarPlayer.tilemapLocation().row))
+        StarPlayer3.ay = 300
+        Marker3 = sprites.create(assets.image`P4`, SpriteKind.pointer)
+        Marker3.setFlag(SpriteFlag.Ghost, true)
+        setupAnimations()
+    }
+    if (Command == true && StarPlayer3) {
+        if (Command == true) {
+            if (StarPlayer3.vy == 0) {
+                StarPlayer3.vy = -145
+            }
+        }
+    }
+})
 scene.onOverlapTile(SpriteKind.Chaser, assets.tile`myTile18`, function (sprite, location) {
     tiles.setTileAt(location, assets.tile`myTile15`)
     scene.setBackgroundColor(13)
 })
-controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
-    if (Command == true) {
-        if (StarPlayer.vy == 0) {
-            StarPlayer.vy = -145
-        }
+scene.onOverlapTile(SpriteKind.Chaser, assets.tile`myTile8`, function (sprite, location) {
+    if (MarioTouchedFlag == false) {
+        ChaserControl = false
+        MarioTouchedFlag = true
+        tiles.placeOnTile(sprite, location)
+        characterAnimations.clearCharacterState(sprite)
+        animation.stopAnimation(animation.AnimationTypes.All, sprite)
+        animation.runImageAnimation(
+        sprite,
+        assets.animation`Maaaaaaario Slide`,
+        200,
+        true
+        )
+        music.stopAllSounds()
+        music.play(music.createSong(assets.song`Mario Finished`), music.PlaybackMode.InBackground)
+        sprite.x += -11
+        sprite.vx = 0
+        sprite.ay = 0
+        sprite.vy = 40
+        Flag.vy = 40
+        timer.background(function () {
+            pauseUntil(() => sprite.isHittingTile(CollisionDirection.Bottom))
+            Flag.vy = 0
+            sprite.vx = 35
+            sprite.ay = 300
+            characterAnimations.clearCharacterState(sprite)
+            animation.stopAnimation(animation.AnimationTypes.All, sprite)
+            animation.runImageAnimation(
+            sprite,
+            assets.animation`Maaaaaaario walk right`,
+            200,
+            true
+            )
+        })
     }
 })
 let MarioState = ""
 let FreakOut = false
 let MaxDistance = 0
+let MarioTouchedFlag = false
+let ChaserControl = false
 let tempVariable = 0
 let frwrkSprite: Sprite = null
-let Marker1: Sprite = null
 let Marker4: Sprite = null
 let Marker3: Sprite = null
+let Marker1: Sprite = null
 let textSprite3: TextSprite = null
 let textSprite2: TextSprite = null
 let PlayersThatFinished = 0
 let textSprite: TextSprite = null
 let Result: Sprite = null
-let Command = false
 let Marker2: Sprite = null
+let Command = false
 let StarPlayer4: Sprite = null
 let StarPlayer3: Sprite = null
 let StarPlayer2: Sprite = null
@@ -638,10 +640,8 @@ let State = ""
 let Screen = ""
 let CastleFront: Sprite = null
 let CastleBack: Sprite = null
-let StarPlayer: Sprite = null
 let Flag: Sprite = null
-let ChaserControl = false
-let MarioTouchedFlag = false
+let StarPlayer: Sprite = null
 let level = 0
 level = 3
 Reset()
