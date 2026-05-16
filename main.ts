@@ -48,7 +48,7 @@ function LevelSetup () {
     music.play(music.createSong(assets.song`lobby0`), music.PlaybackMode.LoopingInBackground)
     if (level == 0) {
         scene.setBackgroundColor(13)
-        tiles.setCurrentTilemap(tilemap`level6`)
+        tiles.setCurrentTilemap(tilemap`level1`)
         tiles.placeOnTile(StarPlayer, tiles.getTileLocation(4, 13))
         StarPlayer.ay = 300
         Flag = sprites.create(img`
@@ -90,7 +90,7 @@ function LevelSetup () {
         setupAnimations()
     } else if (level == 1) {
         scene.setBackgroundColor(13)
-        tiles.setCurrentTilemap(tilemap`level0`)
+        tiles.setCurrentTilemap(tilemap`level2`)
         tiles.placeOnTile(StarPlayer, tiles.getTileLocation(4, 13))
         StarPlayer.ay = 300
         Flag = sprites.create(img`
@@ -132,7 +132,7 @@ function LevelSetup () {
         setupAnimations()
     } else if (level == 2) {
         scene.setBackgroundColor(15)
-        tiles.setCurrentTilemap(tilemap`level5`)
+        tiles.setCurrentTilemap(tilemap`level0`)
         tiles.placeOnTile(StarPlayer, tiles.getTileLocation(4, 13))
         StarPlayer.ay = 300
         Flag = sprites.create(img`
@@ -171,6 +171,12 @@ function LevelSetup () {
         CastleFront.z = 10
         tiles.placeOnTile(CastleFront, tiles.getTileLocation(232, 13))
         CastleFront.y += -8
+        setupAnimations()
+    } else if (level == 3) {
+        scene.setBackgroundColor(13)
+        tiles.setCurrentTilemap(tilemap`level6`)
+        tiles.placeOnTile(StarPlayer, tiles.getTileLocation(4, 13))
+        StarPlayer.ay = 300
         setupAnimations()
     } else {
     	
@@ -637,7 +643,7 @@ let Flag: Sprite = null
 let ChaserControl = false
 let MarioTouchedFlag = false
 let level = 0
-level = 0
+level = 3
 Reset()
 game.onUpdate(function () {
     if (Command == true) {
